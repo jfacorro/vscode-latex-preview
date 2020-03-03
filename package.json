@@ -17,7 +17,9 @@
     "Languages"
   ],
   "keywords": [
-    "latex", "tex", "preview"
+    "latex",
+    "tex",
+    "preview"
   ],
   "activationEvents": [
     "onCommand:latex-preview.createBuildTask",
@@ -126,7 +128,7 @@
     "@types/pdf": "0.0.31",
     "@types/tmp": "0.0.31",
     "@types/ws": "0.0.36",
-    "mocha": "^2.3.3",
+    "mocha": "^7.1.0",
     "typescript": "^2.0.3",
     "vscode": "^1.0.0"
   }
