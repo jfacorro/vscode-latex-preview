@@ -11,12 +11,12 @@ import * as ws from "ws";
 /**
  * Provides preview content and creates a websocket server which communicates with the preview.
  */
-export default class LatexDocumentProvider implements vscode.TextDocumentContentProvider {
+export default class LatexDocumentProvider {
   private http: http.Server;
   private server: ws.Server;
   private listening: Promise<void>;
 
-  private directories = new Map<string, string>();
+  private directories = new Map<string, vscode.Uri>();
   private clients = new Map<string, ws>();
   private connected = new Map<string, Promise<void>>();
   private connectedResolve = new Map<string, Function>();
@@ -58,13 +58,11 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
   /**
    * Creates a working dir and returns client HTML.
    */
-  public async provideTextDocumentContent(uri: vscode.Uri, token: vscode.CancellationToken): Promise<string> {
-    await this.listening;
-
+  public provideTextDocumentContent(uri: vscode.Uri, panel: vscode.WebviewPanel): string {
     // Create a working dir and start listening.
     const path = uri.fsPath;
-
-    this.directories.set(path, await this.createTempDir(path));
+    const outputDir = join(dirname(path), "output");
+    this.directories.set(path, this.getResourcePath(outputDir, panel));
     this.listenForConnection(path);
 
     // Generate the document content.
@@ -75,11 +73,11 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     <!DOCTYPE html>
     <html>
     <head>
-      <link rel="stylesheet" href="${this.getResourcePath("media/style.css")}">
+      <link rel="stylesheet" href="${this.getResourcePath("media/style.css", panel)}">
 
-      <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.js")}"></script>
-      <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.worker.js")}"></script>
-      <script src="${this.getResourcePath("out/src/client.js")}"></script>
+      <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.js", panel)}"></script>
+      <script src="${this.getResourcePath("node_modules/pdfjs-dist/build/pdf.worker.js", panel)}"></script>
+      <script src="${this.getResourcePath("out/src/client.js", panel)}"></script>
     </head>
     <body class="preview" data-path="${attr(path)}" data-websocket="${attr(ws)}">
       <div id="zoom">
@@ -149,7 +147,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
   /**
    * Builds a PDF and returns the path to it.
    */
-  private build(path: string, dir: string): Promise<string> {
+  private build(path: string, dir: vscode.Uri): Promise<string> {
     let command = vscode.workspace.getConfiguration().get(constants.CONFIG_COMMAND, "pdflatex");
     let args = ["-jobname=preview", "-synctex=1", "-interaction=nonstopmode", "-file-line-error"];
 
@@ -157,7 +155,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
       args.push("-pdf");
     }
 
-    args.push(`-output-directory=${arg(dir)}`);
+    args.push(`-output-directory=${arg(dir.fsPath)}`);
     args.push(arg(path));
 
     command = [command].concat(...args).join(" ");
@@ -166,7 +164,7 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     this.output.appendLine(command);
 
     return new Promise((resolve, reject) => {
-      let env = Object.assign({}, process.env, { "OUTPUTDIR": arg(dir) });
+      let env = Object.assign({}, process.env, { "OUTPUTDIR": arg(dir.fsPath) });
       cp.exec(command, { cwd: dirname(path), env: env }, (err, stdout, stderr) => {
         this.diagnostics.clear();
         this.output.append(stdout);
@@ -282,8 +280,9 @@ export default class LatexDocumentProvider implements vscode.TextDocumentContent
     return dir;
   }
 
-  private getResourcePath(file: string): string {
-    return this.context.asAbsolutePath(file);
+  private getResourcePath(file: string, panel: vscode.WebviewPanel): vscode.Uri {
+    const absPath = vscode.Uri.file(this.context.asAbsolutePath(file));
+    return panel.webview.asWebviewUri(absPath);
   }
 }
 

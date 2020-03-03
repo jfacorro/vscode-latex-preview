@@ -1,6 +1,6 @@
 import * as constants from "./constants";
 import LatexDocumentProvider from "./document-provider";
-import { basename, resolve } from "path";
+import { basename, resolve, dirname } from "path";
 import { ExtensionContext, Uri, ViewColumn, commands, languages, window, workspace } from "vscode";
 
 /**
@@ -23,7 +23,6 @@ export function activate(ctx: ExtensionContext) {
   provider = new LatexDocumentProvider(ctx);
 
   ctx.subscriptions.push(provider);
-  ctx.subscriptions.push(workspace.registerTextDocumentContentProvider(constants.PREVIEW_SCHEME, provider));
 
   ctx.subscriptions.push(workspace.onDidSaveTextDocument(doc => {
     if (languages.match(constants.LATEX_SELECTOR, doc) > 0) {
@@ -77,10 +76,13 @@ function showPreview(uri?: Uri, column?: ViewColumn) {
     column = window.activeTextEditor ? window.activeTextEditor.viewColumn : ViewColumn.One;
   }
 
-  const previewUri = uri.with({ scheme: constants.PREVIEW_SCHEME });
-  const title = `Preview "${basename(uri.fsPath)}"`;
-
-  return commands.executeCommand("vscode.previewHtml", previewUri, column, title);
+  // const previewUri = Uri.file(dirname(uri.fsPath));
+  const title = `Preview ${basename(uri.fsPath)}`;
+  const viewType = 'latexPreview';
+  const panel = window.createWebviewPanel(viewType, title, column, {
+    enableScripts: true
+  });
+  panel.webview.html = provider.provideTextDocumentContent(uri, panel);
 }
 
 function showPreviewToSide(uri?: Uri) {

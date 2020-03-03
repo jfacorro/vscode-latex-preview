@@ -10,7 +10,7 @@ let viewports: PDFPageViewport[] = [];
 let zoom = 1.0;
 let zoomInput: HTMLInputElement;
 
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", () => {
   const error = document.getElementById("compile-error");
 
   path = document.body.dataset["path"];
