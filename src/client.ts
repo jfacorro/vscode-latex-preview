@@ -10,6 +10,8 @@ let viewports: PDFPageViewport[] = [];
 let zoom = 1.0;
 let zoomInput: HTMLInputElement;
 
+var PDFJS: PDFJSStatic = window['pdfjs-dist/build/pdf'];
+
 window.addEventListener("DOMContentLoaded", () => {
   const error = document.getElementById("compile-error");
 

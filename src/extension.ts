@@ -1,6 +1,6 @@
 import * as constants from "./constants";
 import LatexDocumentProvider from "./document-provider";
-import { basename, resolve, dirname } from "path";
+import { basename, resolve } from "path";
 import { ExtensionContext, Uri, ViewColumn, commands, languages, window, workspace } from "vscode";
 
 /**
@@ -76,7 +76,6 @@ function showPreview(uri?: Uri, column?: ViewColumn) {
     column = window.activeTextEditor ? window.activeTextEditor.viewColumn : ViewColumn.One;
   }
 
-  // const previewUri = Uri.file(dirname(uri.fsPath));
   const title = `Preview ${basename(uri.fsPath)}`;
   const viewType = 'latexPreview';
   const panel = window.createWebviewPanel(viewType, title, column, {
