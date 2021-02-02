@@ -81,7 +81,7 @@ function showPreview(uri?: Uri, column?: ViewColumn) {
   const panel = window.createWebviewPanel(viewType, title, column, {
     enableScripts: true
   });
-  panel.webview.html = provider.provideTextDocumentContent(uri, panel);
+  provider.provideTextDocumentContent(uri, panel).then( html => panel.webview.html = html );
 }
 
 function showPreviewToSide(uri?: Uri) {

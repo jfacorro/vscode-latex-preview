@@ -58,10 +58,10 @@ export default class LatexDocumentProvider {
   /**
    * Creates a working dir and returns client HTML.
    */
-  public provideTextDocumentContent(uri: vscode.Uri, panel: vscode.WebviewPanel): string {
+  public async provideTextDocumentContent(uri: vscode.Uri, panel: vscode.WebviewPanel): Promise<string> {
     // Create a working dir and start listening.
     const path = uri.fsPath;
-    const outputDir = join(dirname(path), "output");
+    const outputDir = await this.createTempDir(path);
     this.directories.set(path, this.getResourcePath(outputDir, panel));
     this.listenForConnection(path);
 
